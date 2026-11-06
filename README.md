@@ -29,10 +29,14 @@
 אחרי שינוי בקבצי האפליקציה כדאי לעדכן את `VERSION` ב־`sw.js`, כדי שמכשירים שכבר התקינו יקבלו את הגרסה החדשה.
 
 ## פרסום ב־GitHub Pages (חינם)
-1. ממזגים את הקוד לענף `main`.
-2. נכנסים ב־GitHub ל־**Settings → Pages**.
-3. תחת **Source** בוחרים **Deploy from a branch**, ואז `main` ותיקייה `/ (root)`.
-4. אחרי דקה-שתיים האתר יהיה זמין בכתובת `https://<username>.github.io/<repo>/`.
+1. נכנסים לריפו ב־GitHub: https://github.com/yakirdavid/Recipe_Book_Carmela
+2. לוחצים על **Settings** ובתפריט הצד על **Pages**.
+3. תחת **Source** בוחרים **Deploy from a branch**.
+4. תחת **Branch** בוחרים את הענף `claude/eager-bell-d2kbc3` ואת התיקייה `/ (root)`, ולוחצים **Save**.
+5. אחרי דקה-שתיים האתר זמין בכתובת:
+   https://yakirdavid.github.io/Recipe_Book_Carmela/
+
+כל עדכון שנדחף לענף הזה מתפרסם באתר אוטומטית תוך דקה-שתיים.
 
 ## התקנה בטלפון
 - **אייפון (Safari):** פותחים את הכתובת, לוחצים על כפתור השיתוף ואז על "הוספה למסך הבית".
