@@ -16,6 +16,9 @@
   };
 
   let favorites = new Set(store.get("carmela-favorites", []));
+  // Recipes deleted on this device (only hidden here; the book itself is unchanged)
+  let removed = new Set(store.get("carmela-removed", []).filter((id) => recipes.some((r) => r.id === id)));
+  const visible = () => recipes.filter((r) => !removed.has(r.id));
   const state = { query: "", category: "הכל", sub: "הכל" };
   let wakeLock = null;
 
@@ -30,6 +33,8 @@
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17 19 7"/></svg>',
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>',
+    restore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>'
   };
 
@@ -81,6 +86,30 @@
     return favorites.has(id);
   }
 
+  function setRemoved(id, isRemoved) {
+    isRemoved ? removed.add(id) : removed.delete(id);
+    store.set("carmela-removed", [...removed]);
+  }
+
+  // Small message at the bottom of the screen, with an optional action button
+  let toastTimer = null;
+  function toast(text, actionLabel, onAction) {
+    let el = document.getElementById("toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "toast";
+      el.className = "install-hint toast";
+      el.setAttribute("role", "status");
+      document.body.appendChild(el);
+    }
+    el.innerHTML = `<span>${esc(text)}</span>${actionLabel ? `<button type="button" class="btn btn-small">${esc(actionLabel)}</button>` : ""}`;
+    el.hidden = false;
+    const btn = el.querySelector("button");
+    if (btn) btn.addEventListener("click", () => { el.hidden = true; onAction(); });
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.hidden = true; }, 7000);
+  }
+
   function media(r, cls = "") {
     return r.image
       ? `<img src="${esc(r.image)}" alt="${esc(r.title)}" loading="lazy" class="${cls}">`
@@ -89,7 +118,8 @@
 
   // ---------- list view ----------
   function renderList(onlyFavorites) {
-    const categories = ["הכל", ...new Set(recipes.map((r) => r.category).filter(Boolean))];
+    const shown = visible();
+    const categories = ["הכל", ...new Set(shown.map((r) => r.category).filter(Boolean))];
     if (!categories.includes(state.category)) state.category = "הכל";
 
     app.innerHTML = `
@@ -106,7 +136,7 @@
           <div class="hero-copy">
             <h1>מהמטבח של כרמלה, באהבה</h1>
             <div class="hero-ornament" aria-hidden="true">${icons.heart}</div>
-            <p>${recipes.length ? `${recipes.length} מתכונים בספר` : "ספר המתכונים של כרמלה"}</p>
+            <p>${shown.length ? `${shown.length} מתכונים בספר` : "ספר המתכונים של כרמלה"}</p>
           </div>
         </section>`}
         <div class="search">
@@ -118,6 +148,7 @@
         </div>
         <div class="chips subchips" id="subchips" role="tablist" hidden></div>
         <div class="grid" id="grid"></div>
+        ${onlyFavorites ? "" : '<section class="removed" id="removed" hidden></section>'}
       </div>`;
 
     const grid = app.querySelector("#grid");
@@ -125,10 +156,10 @@
 
     // Second row of chips for categories whose recipes have a subcategory
     const drawSubs = () => {
-      const subs = state.category === "הכל" ? [] : [...new Set(recipes
+      const subs = state.category === "הכל" ? [] : [...new Set(shown
         .filter((r) => r.category === state.category).map((r) => r.subcategory).filter(Boolean))];
       // Biggest groups first
-      const count = (sub) => recipes.filter((r) => r.category === state.category && r.subcategory === sub).length;
+      const count = (sub) => shown.filter((r) => r.category === state.category && r.subcategory === sub).length;
       subs.sort((a, b) => count(b) - count(a));
       if (!subs.includes(state.sub)) state.sub = "הכל";
       subBar.hidden = subs.length < 2;
@@ -138,17 +169,17 @@
 
     const draw = () => {
       const q = state.query.trim().toLowerCase();
-      const list = recipes.filter((r) =>
+      const list = shown.filter((r) =>
         (!onlyFavorites || favorites.has(r.id)) &&
         (state.category === "הכל" || r.category === state.category) &&
         (state.sub === "הכל" || r.subcategory === state.sub) &&
         (!q || searchText(r).includes(q))
       );
 
-      if (!recipes.length) {
+      if (!shown.length && !onlyFavorites) {
         grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
           <div class="big">📖</div>
-          הספר מחכה למתכונים הראשונים של כרמלה.
+          ${recipes.length ? "כל המתכונים נמחקו מהמכשיר הזה.<br>אפשר לשחזר אותם כאן למטה." : "הספר מחכה למתכונים הראשונים של כרמלה."}
         </div>`;
         return;
       }
@@ -179,8 +210,36 @@
       }).join("");
     };
 
+    // Deleted-on-this-device list with restore buttons
+    const removedBox = app.querySelector("#removed");
+    const drawRemoved = () => {
+      if (!removedBox) return;
+      const list = recipes.filter((r) => removed.has(r.id));
+      removedBox.hidden = !list.length;
+      removedBox.innerHTML = list.length ? `
+        <details>
+          <summary>${icons.trash}<span>מתכונים שנמחקו (${list.length})</span></summary>
+          <p class="hint">המתכונים האלה מוסתרים רק במכשיר הזה. אפשר להחזיר אותם בכל רגע.</p>
+          <ul class="removed-list">
+            ${list.map((r) => `<li><span>${esc(r.title)}</span>
+              <button type="button" class="btn" data-restore="${esc(r.id)}">${icons.restore}<span>שחזור</span></button></li>`).join("")}
+          </ul>
+        </details>` : "";
+    };
+    if (removedBox) removedBox.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-restore]");
+      if (!btn) return;
+      const r = recipes.find((x) => x.id === btn.dataset.restore);
+      setRemoved(btn.dataset.restore, false);
+      const open = removed.size > 0;
+      renderList(onlyFavorites);
+      if (open) app.querySelector("#removed details")?.setAttribute("open", "");
+      if (r) toast(`"${r.title}" חזר לספר`);
+    });
+
     drawSubs();
     draw();
+    drawRemoved();
 
     app.querySelector("#q").addEventListener("input", (e) => { state.query = e.target.value; draw(); });
     app.querySelector(".chips").addEventListener("click", (e) => {
@@ -281,7 +340,11 @@
               ${"wakeLock" in navigator ? `<button type="button" class="btn" id="wake">${icons.sun}<span>מסך דולק</span></button>` : ""}
               ${navigator.share ? `<button type="button" class="btn" id="share">${icons.share}<span>שיתוף</span></button>` : ""}
               <button type="button" class="btn" id="print">${icons.print}<span>הדפסה / PDF</span></button>
+              ${removed.has(r.id)
+                ? `<button type="button" class="btn" id="restore">${icons.restore}<span>שחזור מתכון</span></button>`
+                : `<button type="button" class="btn btn-danger" id="delete">${icons.trash}<span>מחיקה</span></button>`}
             </div>
+            ${removed.has(r.id) ? `<p class="removed-note">המתכון הזה נמחק מהמכשיר ולא מופיע ברשימה.</p>` : ""}
           </header>
 
           <div class="recipe-body">
@@ -380,10 +443,24 @@
     });
 
     app.querySelector("#print").addEventListener("click", () => window.print());
+
+    const delBtn = app.querySelector("#delete");
+    if (delBtn) delBtn.addEventListener("click", () => {
+      if (!confirm(`למחוק את "${r.title}"?\n\nהמתכון יוסתר רק במכשיר הזה, ואפשר לשחזר אותו בתחתית עמוד הבית.`)) return;
+      setRemoved(r.id, true);
+      location.hash = "#/";
+      toast(`"${r.title}" נמחק`, "ביטול", () => { setRemoved(r.id, false); route(); });
+    });
+    const restoreBtn = app.querySelector("#restore");
+    if (restoreBtn) restoreBtn.addEventListener("click", () => {
+      setRemoved(r.id, false);
+      renderRecipe(r.id);
+      toast(`"${r.title}" חזר לספר`);
+    });
   }
 
   function relatedHtml(r) {
-    const list = (r.related || []).map((id) => recipes.find((x) => x.id === id)).filter(Boolean);
+    const list = (r.related || []).map((id) => recipes.find((x) => x.id === id)).filter((x) => x && !removed.has(x.id));
     if (!list.length) return "";
     return `<div class="related"><h3>מתכונים קשורים</h3><div class="related-list">
       ${list.map((x) => `<a class="chip" href="#/recipe/${encodeURIComponent(x.id)}">${esc(x.emoji || "🍽️")} ${esc(x.title)}</a>`).join("")}
