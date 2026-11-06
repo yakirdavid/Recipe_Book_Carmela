@@ -35,7 +35,7 @@ window.RECIPES = [
     id: "jerusalem-bagel",
     title: "בייגל ירושלמי",
     description: "סימיט כמו בטורקיה: בייגלה שמרים מלופף, טבול בסילאן ומצופה שומשום.",
-    category: "פיצה ובצקים",
+    category: "בצקים",
     tags: ["שמרים", "שומשום", "סימיט", "מאפה"],
     image: "images/jerusalem-bagel.jpg",
     emoji: "🥯",

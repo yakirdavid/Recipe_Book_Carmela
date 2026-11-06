@@ -101,7 +101,7 @@
         </section>` : `
         <section class="hero hero-home">
           <figure class="hero-photo">
-            <img src="images/carmela-and-me.webp" width="802" height="520" alt="כרמלה ובנה">
+            <img src="images/family.webp" width="1200" height="801" alt="כרמלה עם כל המשפחה">
           </figure>
           <div class="hero-copy">
             <h1>מהמטבח של כרמלה, באהבה</h1>
