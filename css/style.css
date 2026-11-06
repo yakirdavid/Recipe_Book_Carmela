@@ -1,21 +1,21 @@
 /* ===== Tokens ===== */
 :root {
-  --bg: #f7f1e8;
-  --surface: #fffdf9;
-  --surface-2: #f1e8da;
-  --text: #2b2520;
-  --text-soft: #6f6359;
-  --line: #e6dccd;
-  --accent: #c0583a;
-  --accent-soft: #f4dfd5;
+  --bg: #faf5f2;
+  --surface: #fffdfc;
+  --surface-2: #f4e9e6;
+  --text: #2e2427;
+  --text-soft: #76636a;
+  --line: #ecdcd8;
+  --accent: #a3566a;
+  --accent-soft: #f5e3e6;
   --accent-text: #fff;
-  --olive: #6b7a48;
-  --olive-soft: #e5e9d6;
-  --shadow: 0 1px 2px rgba(60, 40, 20, .06), 0 8px 24px rgba(60, 40, 20, .08);
+  --olive: #607257;
+  --olive-soft: #e6ece0;
+  --shadow: 0 1px 2px rgba(70, 35, 45, .06), 0 8px 24px rgba(70, 35, 45, .08);
   --radius: 18px;
   --radius-sm: 12px;
   --font-body: "Assistant", Calibri, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-  --font-title: "Assistant", Calibri, system-ui, sans-serif;
+  --font-title: "Frank Ruhl Libre", "David", Georgia, serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   color-scheme: light dark;
@@ -23,17 +23,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1c1915;
-    --surface: #26221d;
-    --surface-2: #322c25;
-    --text: #f2ebe1;
-    --text-soft: #b5a99b;
-    --line: #3b342c;
-    --accent: #e27a5a;
-    --accent-soft: #4a2e24;
-    --accent-text: #1c1915;
-    --olive: #a9b884;
-    --olive-soft: #343a27;
+    --bg: #1d1719;
+    --surface: #272023;
+    --surface-2: #33292d;
+    --text: #f5ecee;
+    --text-soft: #bba8ae;
+    --line: #403438;
+    --accent: #e49aad;
+    --accent-soft: #4a2c36;
+    --accent-text: #1d1719;
+    --olive: #a9bb9c;
+    --olive-soft: #2c3329;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .35);
   }
 }
@@ -106,12 +106,45 @@ main { outline: none; }
 .hero { padding: 28px 0 8px; }
 .hero h1 {
   font-family: var(--font-title);
-  font-weight: 800;
+  font-weight: 700;
   font-size: clamp(2rem, 6vw, 3rem);
   line-height: 1.15;
   margin: 0 0 6px;
 }
 .hero p { margin: 0; color: var(--text-soft); }
+
+/* Home hero with the family photo */
+.hero-home {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding-top: 24px;
+}
+.hero-photo { flex: 0 0 auto; width: min(420px, 46%); margin: 0; }
+.hero-photo img { width: 100%; height: auto; }
+.hero-copy { flex: 1; min-width: 0; }
+.hero-home h1 { color: var(--text); }
+.hero-ornament {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent);
+  margin: 4px 0 10px;
+  max-width: 240px;
+}
+.hero-ornament::before, .hero-ornament::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  opacity: .45;
+}
+.hero-ornament svg { width: 16px; height: 16px; }
+@media (max-width: 640px) {
+  .hero-home { flex-direction: column; align-items: stretch; gap: 18px; text-align: center; padding-top: 18px; }
+  .hero-photo { width: min(100%, 380px); margin: 0 auto; }
+  .hero-ornament { margin-inline: auto; }
+}
 
 .search {
   position: relative;
@@ -497,7 +530,7 @@ main { outline: none; }
   @page { size: A4; margin: 14mm 14mm 16mm; }
   :root {
     --bg: #fff; --surface: #fff; --surface-2: #fff; --text: #111; --text-soft: #555;
-    --line: #ccc; --accent: #a8462a; --accent-soft: #fff; --olive: #4d5a2f; --olive-soft: #f2f4ea;
+    --line: #ccc; --accent: #8f4357; --accent-soft: #fff; --olive: #4f5f47; --olive-soft: #eef2ea;
   }
   * { box-shadow: none !important; animation: none !important; }
   html, body { background: #fff; font-size: 10.5pt; line-height: 1.45; -webkit-print-color-adjust: exact; print-color-adjust: exact; }

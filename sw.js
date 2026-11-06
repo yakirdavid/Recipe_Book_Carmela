@@ -1,6 +1,6 @@
 // Offline support: serve from cache, refresh in the background.
 // Bump VERSION when changing app files so old caches are cleared.
-const VERSION = "v1";
+const VERSION = "v2";
 const PREFIX = "carmela-recipes-";
 const CACHE = `${PREFIX}${VERSION}`;
 const SHELL = [
@@ -12,7 +12,8 @@ const SHELL = [
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",
-  "icons/apple-touch-icon.png"
+  "icons/apple-touch-icon.png",
+  "images/carmela-and-me.webp"
 ];
 
 self.addEventListener("install", (e) => {

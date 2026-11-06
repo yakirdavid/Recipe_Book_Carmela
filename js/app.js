@@ -94,10 +94,21 @@
 
     app.innerHTML = `
       <div class="container">
+        ${onlyFavorites ? `
         <section class="hero">
-          <h1>${onlyFavorites ? "המועדפים שלי" : "מה מבשלים היום?"}</h1>
-          <p>${onlyFavorites ? "המתכונים שסימנת בלב" : (recipes.length ? `${recipes.length} מתכונים בספר` : "ספר המתכונים של כרמלה")}</p>
-        </section>
+          <h1>המועדפים שלי</h1>
+          <p>המתכונים שסימנת בלב</p>
+        </section>` : `
+        <section class="hero hero-home">
+          <figure class="hero-photo">
+            <img src="images/carmela-and-me.webp" width="802" height="520" alt="כרמלה ובנה">
+          </figure>
+          <div class="hero-copy">
+            <h1>מהמטבח של כרמלה, באהבה</h1>
+            <div class="hero-ornament" aria-hidden="true">${icons.heart}</div>
+            <p>${recipes.length ? `${recipes.length} מתכונים בספר` : "ספר המתכונים של כרמלה"}</p>
+          </div>
+        </section>`}
         <div class="search">
           ${icons.search}
           <input type="search" id="q" placeholder="חיפוש לפי שם, מצרך או תגית…" value="${esc(state.query)}" autocomplete="off" enterkeyhint="search">
