@@ -35,6 +35,7 @@
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6"/></svg>',
     restore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+    pdf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 18v-6M9 15l3 3 3-3"/></svg>',
     print: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>'
   };
 
@@ -108,6 +109,36 @@
     if (btn) btn.addEventListener("click", () => { el.hidden = true; onAction(); });
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { el.hidden = true; }, 7000);
+  }
+
+  // Opens the phone's share sheet with the PDF (choose WhatsApp there).
+  // Where files can't be shared (most computers) the PDF is downloaded instead.
+  async function sharePdfFile(blob, title) {
+    const name = `${title.replace(/[\\/:*?"<>|]+/g, " ").trim() || "מתכון"}.pdf`;
+    const file = new File([blob], name, { type: "application/pdf" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      const share = () => navigator.share({ files: [file], title }).catch((err) => {
+        if (err && err.name === "NotAllowedError") offer();
+      });
+      // Preparing the PDF can take long enough that the browser no longer counts
+      // the tap; then we ask for one more tap.
+      const offer = () => toast("ה־PDF מוכן", "שליחה", share);
+      try {
+        await navigator.share({ files: [file], title });
+      } catch (err) {
+        if (err && err.name === "NotAllowedError") offer();
+      }
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast("קובץ ה־PDF נשמר. אפשר לצרף אותו בווטסאפ.");
   }
 
   function media(r, cls = "") {
@@ -339,6 +370,7 @@
               <button type="button" class="btn${favorites.has(r.id) ? " on" : ""}" id="fav">${icons.heart}<span>מועדף</span></button>
               ${"wakeLock" in navigator ? `<button type="button" class="btn" id="wake">${icons.sun}<span>מסך דולק</span></button>` : ""}
               ${navigator.share ? `<button type="button" class="btn" id="share">${icons.share}<span>שיתוף</span></button>` : ""}
+              <button type="button" class="btn" id="pdf">${icons.pdf}<span>שליחת PDF</span></button>
               <button type="button" class="btn" id="print">${icons.print}<span>הדפסה / PDF</span></button>
               ${removed.has(r.id)
                 ? `<button type="button" class="btn" id="restore">${icons.restore}<span>שחזור מתכון</span></button>`
@@ -443,6 +475,36 @@
     });
 
     app.querySelector("#print").addEventListener("click", () => window.print());
+
+    // Share as a PDF file (WhatsApp etc.) — reflects the chosen version and quantity
+    const pdfBtn = app.querySelector("#pdf");
+    setTimeout(() => window.RecipePdf && window.RecipePdf.preload(), 1500);
+    pdfBtn.addEventListener("click", async () => {
+      if (pdfBtn.disabled || !window.RecipePdf) return;
+      const label = pdfBtn.querySelector("span");
+      pdfBtn.disabled = true;
+      pdfBtn.classList.add("busy");
+      label.textContent = "מכין PDF…";
+      let blob;
+      try {
+        updatePrintMeta();
+        blob = await window.RecipePdf.make({
+          recipe: r,
+          stats,
+          meta: app.querySelector("#print-meta").textContent,
+          ingsEl: ings,
+          stepsEl: steps
+        });
+      } catch (err) {
+        toast("לא הצלחתי להכין את ה־PDF. כדאי לבדוק את החיבור לאינטרנט ולנסות שוב.");
+        return;
+      } finally {
+        pdfBtn.disabled = false;
+        pdfBtn.classList.remove("busy");
+        label.textContent = "שליחת PDF";
+      }
+      sharePdfFile(blob, r.title);
+    });
 
     const delBtn = app.querySelector("#delete");
     if (delBtn) delBtn.addEventListener("click", () => {

@@ -1,6 +1,6 @@
 // Offline support: serve from cache, refresh in the background.
 // Bump VERSION when changing app files so old caches are cleared.
-const VERSION = "v4";
+const VERSION = "v5";
 const PREFIX = "carmela-recipes-";
 const CACHE = `${PREFIX}${VERSION}`;
 const SHELL = [
@@ -8,6 +8,7 @@ const SHELL = [
   "index.html",
   "css/style.css",
   "js/app.js",
+  "js/pdf.js",
   "data/recipes.js",
   "manifest.webmanifest",
   "icons/icon-192.png",
